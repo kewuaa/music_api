@@ -171,8 +171,8 @@ class API(Template):
                 master=self,
             )
         sess = await self._sess
-        url = "https://music.migu.cn/v3/search"
         app_info = await self._app_info
+        url = "https://music.migu.cn/v3/search"
         params = {
             "f": "html",
             "s": get_time_stamp(),
