@@ -1,6 +1,6 @@
 import asyncio
-from typing import Optional
 from hashlib import md5
+from typing import Optional
 
 from lxml.html import fromstring
 
