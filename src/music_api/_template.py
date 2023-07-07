@@ -35,7 +35,7 @@ class Template(ABC):
 
         desc: str = ""
         img_url: str = ""
-        id: str = ""
+        id: tuple = tuple()
         master: "Template" = None
 
     @dataclass(order=False, eq=False, repr=False)
@@ -117,10 +117,10 @@ class Template(ABC):
 
 
     @abstractmethod
-    async def fetch_song(self, _id: str) -> Song:
-        """ fetch song by id.
+    async def fetch_song(self, info: SongInfo) -> Song:
+        """ fetch song by SongInfo.
 
-        :param _id: id of the song to fetch
+        :param info: SongInfo
         :return: Song object
         """
 
