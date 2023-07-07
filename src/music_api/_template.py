@@ -26,6 +26,7 @@ class Template(ABC):
             NeedLogin = 1
             NeedVIP = 2
         url: str = ""
+        format: str = ""
         status: Status = Status.Success
 
     @dataclass(order=False, eq=False, repr=False)
