@@ -10,6 +10,15 @@ from qrcode import make as make_qrcode
 
 from .._template import Template
 from ..lib.AES import AES
+encSecKey = (
+    "21e8dcd7b013c2e56af244ad4e55484d5840b108df255fbeccf88e8187362476af2cc881a6"
+    "1884aea955937337fe3bdfe896a62c27606da8aea2f3c93b9bb6c6e0c17b85da6e3a766d58"
+    "0286967975db7f0f38ef88d582b39f92058deff794b705702e70be6f26b93c206e55e55e6a"
+    "51874469fd11cdff86df742c3b9dd89abe"
+)
+i = 'jkUEeutwbd2HLFNL'
+g = '0CoJUm6Qyw8W8jud'
+
 
 
 class API(Template):
@@ -46,15 +55,6 @@ class API(Template):
         aes = AES.new(key.encode(), AES.MODE_CBC, b'0102030405060708')
         return base64.b64encode(aes.encrypt(s)).decode()
 
-    encSecKey = (
-        "21e8dcd7b013c2e56af244ad4e55484d5840b108df255fbeccf88e8187362476af2cc8"
-        "81a61884aea955937337fe3bdfe896a62c27606da8aea2f3c93b9bb6c6e0c17b85da6e"
-        "3a766d580286967975db7f0f38ef88d582b39f92058deff794b705702e70be6f26b93c"
-        "206e55e55e6a51874469fd11cdff86df742c3b9dd89abe"
-    )
-    i = 'jkUEeutwbd2HLFNL'
-    g = '0CoJUm6Qyw8W8jud'
-
     def _encrypt(self, data: dict) -> str:
         """ encrypt data.
 
@@ -63,11 +63,11 @@ class API(Template):
         """
 
         s = json.dumps(data)
-        s = self._aes(s, self.g)
-        s = self._aes(s, self.i)
+        s = self._aes(s, g)
+        s = self._aes(s, i)
         return {
             "params": s,
-            "encSecKey": self.encSecKey,
+            "encSecKey": encSecKey,
         }
 
     async def _fetch_unikey(self) -> str:
