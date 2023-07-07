@@ -6,6 +6,7 @@ from lxml.html import fromstring
 
 from .._template import Template
 from ..utils import get_time_stamp
+appid = "16073360"
 secret = "0b50b02fd0d73a9c4c8c3a781c30845f"
 
 
@@ -70,7 +71,7 @@ class API(Template):
         sess = await self._sess
         url = "https://music.91q.com/v1/song/tracklink"
         params = {
-            "appid": "16073360",
+            "appid": appid,
             "TSID": info.id[0],
             "timestamp": get_time_stamp(),
         }
@@ -97,7 +98,7 @@ class API(Template):
         data = {
             'phone': login_id,
             'password': md5(password.encode()).hexdigest(),
-            'appid': "16073360",
+            'appid': appid,
             'timestamp': time_stamp,
         }
         params = {
