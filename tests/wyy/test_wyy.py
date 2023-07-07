@@ -20,7 +20,7 @@ async def _test() -> None:
         api = wyy.API()
         songs = await api.search("周杰伦")
         assert songs
-        song = await api.fetch_song(songs[0].id)
+        song = await api.fetch_song(songs[0])
         assert song.status == song.Status.Success
     finally:
         await api.deinit()

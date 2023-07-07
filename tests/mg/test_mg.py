@@ -32,7 +32,7 @@ async def _test_login_by_qr() -> None:
         if login_by_qr is not None:
             await login_by_qr(show)
         songs = await api.search("张碧晨")
-        song = await api.fetch_song(songs[0].id)
+        song = await api.fetch_song(songs[0])
         assert song.status == song.Status.Success
     finally:
         await api.deinit()
