@@ -1,9 +1,7 @@
 import os
-import sys
 import json
 import asyncio
 from pathlib import Path
-sys.path.append("./src")
 
 from music_api import mg
 account_path = Path(__file__).parent / "account"
