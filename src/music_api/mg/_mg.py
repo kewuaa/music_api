@@ -189,8 +189,8 @@ class API(Template):
         res = await sess.get(url, params=params)
         page = await res.text()
         tree = fromstring(page)
-        data = tree.xpath('//div[@class="songlist-body"]/div')
-        return [parse(tree) for tree in data]
+        items = tree.xpath('//div[@class="songlist-body"]/div')
+        return [parse(tree) for tree in items]
 
     async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
         """ fetch song by SongInfo.
