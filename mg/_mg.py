@@ -167,7 +167,7 @@ class API(Template):
             return Template.SongInfo(
                 desc=" -> ".join(desc),
                 img_url=img_url,
-                id=source_id,
+                id=(source_id,),
                 master=self,
             )
         sess = await self._sess
