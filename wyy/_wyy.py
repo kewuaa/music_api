@@ -105,7 +105,7 @@ class API(Template):
                     item["al"]["name"],
                 )),
                 img_url=item["al"]["picUrl"],
-                id=item["id"],
+                id=(item["id"],),
                 master=self,
             )
         sess = await self._sess
@@ -130,10 +130,10 @@ class API(Template):
             raise RuntimeError("search song by keyword failed")
         return [parse(item) for item in res["result"]["songs"]]
 
-    async def fetch_song(self, _id: str) -> Template.Song:
-        """ fetch song by id.
+    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+        """ fetch song by SongInfo.
 
-        :param _id: id of the song to fetch
+        :param info: SongInfo
         :return: Song object
         """
 
@@ -143,7 +143,7 @@ class API(Template):
             "csrf_token": self._csrf_token
         }
         data = {
-            'ids': f'[{_id}]',
+            'ids': f'[{info.id[0]}]',
             'level': 'standard',
             'encodeType': 'aac',
             'csrf_token': self._csrf_token,

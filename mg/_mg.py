@@ -192,10 +192,10 @@ class API(Template):
         data = tree.xpath('//div[@class="songlist-body"]/div')
         return [parse(tree) for tree in data]
 
-    async def fetch_song(self, _id: str) -> Template.Song:
-        """ fetch song by id.
+    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+        """ fetch song by SongInfo.
 
-        :param _id: id of the song to fetch
+        :param info: SongInfo
         :return: Song object
         """
 
@@ -205,7 +205,7 @@ class API(Template):
         key = \
             '4ea5c508a6566e76240543f8feb06fd457777be39549c4016436afda65d2330e'
         data = {
-            'copyrightId': _id,
+            'copyrightId': info.id[0],
             'type': 2,  # """ type: 标准:1 高品:2 无损:3,至臻:4 3D:5 """
             "auditionsFlag": 11,
         }
