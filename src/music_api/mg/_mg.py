@@ -235,7 +235,7 @@ class API(Template):
             return Template.Song(url="https:" + song_url)
 
     async def _fetch_captcha(self) -> bytes:
-        """ fetch the verify code needed by sms log in.
+        """ fetch captcha.
 
         :return: captcha bytes
         """
