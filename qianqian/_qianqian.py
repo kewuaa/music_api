@@ -22,10 +22,10 @@ class API(Template):
         :param loop: the event loop, optional
         """
 
-        super().__init__(loop)
         self.login = self.LoginHandleT(
             PWD=(None, self._login_by_pwd),
         )
+        super().__init__(loop)
 
     def _encrypt(self, params: dict) -> str:
         """ encrypt parameters and get parameter sign.
