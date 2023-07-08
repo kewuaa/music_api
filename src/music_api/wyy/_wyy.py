@@ -33,12 +33,12 @@ class API(Template):
         :param loop: the event loop, optional
         """
 
-        super().__init__(loop)
         self.login = self.LoginHandleT(
             QR=self._login_by_qrcode,
             # PWD=(None, self._login_by_pwd),
             # SMS=(None, self._send_sms, self._login_by_sms),
         )
+        super().__init__(loop)
         self._csrf_token = ""
 
     def _aes(self, s: str, key: str) -> str:
