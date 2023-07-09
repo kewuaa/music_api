@@ -1,10 +1,11 @@
 import asyncio
+import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from random import choice
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable, Optional, Union
 
 import aiofiles
 import aiohttp
@@ -125,3 +126,17 @@ class Template(ABC):
         """
 
         raise NotImplementedError
+
+    async def save_cookies(self, path: Union[str, Path]) -> None:
+        """ save cookies."""
+
+        sess = await self._sess
+        with open(path, "wb") as f:
+            pickle.dump(sess.cookie_jar._cookies, f)
+
+    async def load_cookies(self, path: Union[str, Path]) -> None:
+        """ load cookies."""
+
+        sess = await self._sess
+        with open(path, "rb") as f:
+            sess.cookie_jar._cookies = pickle.load(f)
