@@ -10,6 +10,7 @@ from qrcode import make as make_qrcode
 
 from .._template import Template
 from ..lib.AES import AES
+
 encSecKey = (
     "21e8dcd7b013c2e56af244ad4e55484d5840b108df255fbeccf88e8187362476af2cc881a6"
     "1884aea955937337fe3bdfe896a62c27606da8aea2f3c93b9bb6c6e0c17b85da6e3a766d58"

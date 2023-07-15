@@ -11,6 +11,7 @@ from typing import Optional
 import aiohttp
 
 from .._template import Template
+
 MAX_INT = 2 ** 31
 jscsript_path = Path(__file__).parent / "encrypt.js"
 
