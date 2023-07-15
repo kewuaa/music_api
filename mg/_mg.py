@@ -165,7 +165,7 @@ class API(Template):
             desc = [info_dict['title'], info_dict['singer']]
             if info_dict.get('album') is not None:
                 desc.append(info_dict['album'])
-            img_url = info_dict["imgUrl"]
+            img_url = "https:" + info_dict["imgUrl"]
             source_id = info_dict['linkUrl'].split('/')[-1]
             return Template.SongInfo(
                 desc=" -> ".join(desc),
