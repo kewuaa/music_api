@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from random import choice
-from typing import Awaitable, Callable, Optional, Union
+from typing import Any, Awaitable, Callable, Optional, Union, Coroutine
 
 import aiofiles
 import aiohttp
@@ -37,24 +37,29 @@ class Template(ABC):
         desc: str = ""
         img_url: str = ""
         id: tuple = tuple()
-        master: "Template" = None
+        master: "Template" = None # pyright: ignore
 
     @dataclass(order=False, eq=False, repr=False)
     class LoginHandleT:
         """ handle for log in."""
 
-        QR: Optional[Callable[[None], Awaitable[None]]] = None
+        QR: Optional[
+            Callable[
+                [Callable[[bytes], Coroutine[Any, Any, None]]],
+                Coroutine[Any, Any, None]
+            ]
+        ] = None
         PWD: Optional[
             tuple[
-                Optional[Callable[[None], Awaitable[bytes]]],
-                Callable[[str, str, Optional[str]], Awaitable[None]]
+                Optional[Callable[[], Coroutine[Any, Any, bytes]]],
+                Callable[[str, str, str], Coroutine[Any, Any, None]]
             ]
         ] = None
         SMS: Optional[
             tuple[
-                Optional[Callable[[None], Awaitable[bytes]]],
-                Callable[[str, Optional[str]], Awaitable[None]],
-                Callable[[str, str, Optional[str]], Awaitable[None]]
+                Optional[Callable[[], Coroutine[Any, Any, bytes]]],
+                Callable[[str, str], Coroutine[Any, Any, None]],
+                Callable[[str, str, str], Coroutine[Any, Any, None]]
             ]
         ] = None
     login = LoginHandleT()
@@ -68,9 +73,9 @@ class Template(ABC):
         :param loop: the event loop, optional.
         """
 
-        self._loop = loop = asyncio.get_event_loop() if loop is None else loop
+        self._loop = asyncio.get_event_loop() if loop is None else loop
         self._sess: Awaitable[aiohttp.ClientSession]  = \
-            loop.create_task(self._init_sess())
+            self._loop.create_task(self._init_sess())
 
     @staticmethod
     async def load_agents() -> str:
@@ -132,11 +137,11 @@ class Template(ABC):
 
         sess = await self._sess
         with open(path, "wb") as f:
-            pickle.dump(sess.cookie_jar._cookies, f)
+            pickle.dump(sess.cookie_jar._cookies, f) # pyright: ignore
 
     async def load_cookies(self, path: Union[str, Path]) -> None:
         """ load cookies."""
 
         sess = await self._sess
         with open(path, "rb") as f:
-            sess.cookie_jar._cookies = pickle.load(f)
+            sess.cookie_jar._cookies = pickle.load(f) # pyright: ignore

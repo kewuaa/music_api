@@ -2,7 +2,6 @@ import asyncio
 import base64
 import json
 from ctypes import c_uint32
-from http.cookies import SimpleCookie
 from pathlib import Path
 from secrets import randbelow
 from time import time
@@ -117,8 +116,10 @@ class API(Template):
         """
 
         sess = await self._sess
-        cookies: SimpleCookie = sess.cookie_jar.filter_cookies("https://www.kuwo.cn/")
-        hm_token = cookies.get("Hm_token").value
+        cookies = sess.cookie_jar.filter_cookies("https://www.kuwo.cn/") # pyright: ignore
+        hm_token = cookies.get("Hm_token")
+        assert hm_token is not None
+        hm_token = hm_token.value
         proc = await asyncio.create_subprocess_shell(
             f"node {jscsript_path} {hm_token}",
             stdout=asyncio.subprocess.PIPE,
