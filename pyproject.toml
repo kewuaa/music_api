@@ -1,2 +1,6 @@
-[tool.jedi]
+[tool.pyright]
+include = ["src"]
+exclude = [
+    "**/__pycache__",
+]
 venv = 'spider'
