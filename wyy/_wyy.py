@@ -2,9 +2,8 @@ import asyncio
 import base64
 import json
 from hashlib import md5
-from http.cookies import SimpleCookie
 from io import BytesIO
-from typing import Awaitable, Callable, Optional
+from typing import Any, Callable, Coroutine, Optional
 
 from qrcode import make as make_qrcode
 
@@ -50,13 +49,13 @@ class API(Template):
         :return: encrypted string
         """
 
-        s = s.encode()
+        ss = s.encode()
         pad = 16 - len(s) % 16
-        s += chr(pad).encode() * pad
+        ss += chr(pad).encode() * pad
         aes = AES.new(key.encode(), AES.MODE_CBC, b'0102030405060708')
-        return base64.b64encode(aes.encrypt(s)).decode()
+        return base64.b64encode(aes.encrypt(ss)).decode()
 
-    def _encrypt(self, data: dict) -> str:
+    def _encrypt(self, data: dict) -> dict:
         """ encrypt data.
 
         :param data: data to post
@@ -91,7 +90,7 @@ class API(Template):
             raise RuntimeError("fetch unikey failed")
         return res["unikey"]
 
-    async def search(self, keyword: str) -> Template.SongInfo:
+    async def search(self, keyword: str) -> list[Template.SongInfo]:
         """ search song by keyword.
 
         :param keyword: keyword to search
@@ -163,7 +162,7 @@ class API(Template):
         """ update csrf_token after log in."""
 
         sess = await self._sess
-        cookies: SimpleCookie = sess.cookie_jar.filter_cookies("https://music.163.com/")
+        cookies = sess.cookie_jar.filter_cookies("https://music.163.com/") # pyright: ignore
         csrf_token = cookies.get("__csrf")
         self._csrf_token = "" if csrf_token is None else csrf_token.value
 
@@ -182,7 +181,7 @@ class API(Template):
 
     async def _login_by_qrcode(
         self,
-        qrcode_handle: Callable[[bytes], Awaitable[None]]
+        qrcode_handle: Callable[[bytes], Coroutine[Any, Any, None]]
     ) -> None:
         """ log in by qr code.
 
