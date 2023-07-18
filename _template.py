@@ -112,7 +112,7 @@ class Template(ABC):
             await sess.close()
 
     @abstractmethod
-    async def search(self, keyword: str) -> list:
+    async def search(self, keyword: str) -> list[SongInfo]:
         """ search song by keyword.
 
         :param name: keyword to search
