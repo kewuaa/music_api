@@ -91,7 +91,7 @@ class API(Template):
             'callback': 'callback123',
             'keyword': keyword,
             'page': '1',
-            'pagesize': '30',
+            'pagesize': '15',
             'bitrate': '0',
             'isfuzzy': '0',
             'inputtype': '0',
