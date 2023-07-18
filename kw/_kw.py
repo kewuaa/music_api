@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+import math
 from ctypes import c_uint32
 from pathlib import Path
 from secrets import randbelow
@@ -70,6 +71,32 @@ def reqid():
         return ''.join(result)
     return get_reqid
 
+
+def encrypt(value: str, cookie_key: str) -> str:
+    # key = "".join(str(ord(s)) for s in cookie_key)
+    # key = (
+    #     "7210995731171181169599100985350521025250102489910149579849545798564855"
+    #     "504950519752555055"
+    # )
+    o = 60950
+    l = 20
+    c = 2 ** 31 - 1
+    # d = int(round(1e9 * random()) % 1e8)
+    d = 2434015
+    key = 798334170
+    f = ""
+    for s in value:
+        h = ord(s) ^ math.floor(key / c * 255)
+        if h < 16:
+            f += f"0{hex(h)[2:]}"
+        else:
+            f += str(hex(h)[2:])
+        key = (o * int(key) + l) % c
+    # d = f"{hex(d)[2:]:0>8}"
+    d = "002523df"
+    return f + d
+
+
 class API(Template):
     """ kuwo music."""
 
@@ -98,16 +125,17 @@ class API(Template):
         :return: ClientSession
         """
 
-        return aiohttp.ClientSession(
+        sess = aiohttp.ClientSession(
             loop=self._loop,
             headers={
                 "user-agent": await self.load_agents(),
                 "Referer": "https://www.kuwo.cn/",
-                "Content-Type": "application/json;charset=UTF-8",
                 "Host": "www.kuwo.cn",
             },
-            cookies={"Hm_token": "XenHKmA5GXynKepXDdA56i6fs45EWrBx"}
+            # cookies={"Hm_token": "chB5p2Fz5DyxewBQ7Qm8PH7j4Y44JnrS"}
         )
+        await sess.get("http://www.kuwo.cn/")
+        return sess
 
     async def _session(self) -> aiohttp.ClientSession:
         """ get ClientSession and update csrf in headers.
@@ -117,18 +145,22 @@ class API(Template):
 
         sess = await self._sess
         cookies = sess.cookie_jar.filter_cookies("https://www.kuwo.cn/") # pyright: ignore
-        hm_token = cookies.get("Hm_token")
-        assert hm_token is not None
-        hm_token = hm_token.value
-        proc = await asyncio.create_subprocess_shell(
-            f"node {jscsript_path} {hm_token}",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        token = cookies.get("Hm_Iuvt_cdb524f42f0ce19b169b8072123a4727")
+        assert token is not None
+        token = token.value
+        # proc = await asyncio.create_subprocess_shell(
+        #     f"node {jscsript_path} {token} Hm_Iuvt_cdb524f42f0ce19b169b8072123a4727",
+        #     stdout=asyncio.subprocess.PIPE,
+        #     stderr=asyncio.subprocess.PIPE,
+        # )
+        # stdout, stderr = await proc.communicate()
+        # if stderr:
+        #     raise RuntimeError(f"execute js script failed: {stderr.decode()}")
+        # sess.headers["Secret"] = stdout.decode().strip()
+        sess.headers["Secret"] = encrypt(
+            token,
+            "Hm_Iuvt_cdb524f42f0ce19b169b8072123a4727"
         )
-        stdout, stderr = await proc.communicate()
-        if stderr:
-            raise RuntimeError(f"execute js script failed: {stderr.decode()}")
-        sess.headers["Cross"] = stdout.decode().strip()
         return sess
 
     async def search(self, keyword: str) -> list[Template.SongInfo]:
@@ -156,9 +188,15 @@ class API(Template):
             "plat": "web_www",
             "from": "",
         }
+        __import__('pprint').pprint(params)
+        print(sess.headers)
+        print(sess.cookie_jar._cookies)
         res = await sess.get(url, params=params)
         res = await res.json(content_type=None)
-        if res["code"] != 200:
+        status_code = res.get("code")
+        if status_code is None:
+            raise RuntimeError(f"search songs by keyword failed: {res['message']}")
+        elif status_code != 200:
             raise RuntimeError(f"search songs by keyword failed: {res['msg']}")
         items = res["data"]["list"]
         return [parse(item) for item in items]
