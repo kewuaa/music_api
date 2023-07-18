@@ -188,9 +188,6 @@ class API(Template):
             "plat": "web_www",
             "from": "",
         }
-        __import__('pprint').pprint(params)
-        print(sess.headers)
-        print(sess.cookie_jar._cookies)
         res = await sess.get(url, params=params)
         res = await res.json(content_type=None)
         status_code = res.get("code")
