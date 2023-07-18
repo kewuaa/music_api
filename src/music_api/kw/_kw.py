@@ -182,7 +182,7 @@ class API(Template):
         params = {
             "key": keyword,
             "pn": "1",
-            "rn": "20",
+            "rn": "15",
             "httpsStatus": "1",
             "reqId": self._gen_reqid(),
             "plat": "web_www",

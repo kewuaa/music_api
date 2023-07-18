@@ -120,7 +120,7 @@ class API(Template):
             "type": '1',
             "offset": '0',
             "total": "true",
-            "limit": "30",
+            "limit": "15",
             "csrf_token": self._csrf_token,
         }
         data = self._encrypt(data)
