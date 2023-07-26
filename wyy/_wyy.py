@@ -90,15 +90,15 @@ class API(Template):
             raise RuntimeError("fetch unikey failed")
         return res["unikey"]
 
-    async def search(self, keyword: str) -> list[Template.SongInfo]:
+    async def search(self, keyword: str) -> list[Template.Song.Information]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item: dict) -> Template.SongInfo:
-            return Template.SongInfo(
+        def parse(item: dict) -> Template.Song.Information:
+            return Template.Song.Information(
                 desc=" -> ".join((
                     item["name"],
                     "/".join(ar["name"] for ar in item["ar"]),
@@ -130,7 +130,7 @@ class API(Template):
             raise RuntimeError("search song by keyword failed")
         return [parse(item) for item in res["result"]["songs"]]
 
-    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
@@ -155,8 +155,15 @@ class API(Template):
             raise RuntimeError("fetch song failed")
         song_url = res["data"][0]["url"]
         if song_url is None:
-            return Template.Song(status=Template.Song.Status.NeedVIP)
-        return Template.Song(url=song_url, format=res["data"][0]["type"])
+            return Template.Song(
+                info=info,
+                status=Template.Song.Status.NeedVIP
+            )
+        return Template.Song(
+            info=info,
+            url=song_url,
+            format=res["data"][0]["type"]
+        )
 
     async def _update_token(self) -> None:
         """ update csrf_token after log in."""

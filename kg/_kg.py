@@ -63,14 +63,14 @@ class API(Template):
             raise RuntimeError("fetch kugou appid failed")
         return appid.group(1)
 
-    async def search(self, keyword: str) -> list[Template.SongInfo]:
+    async def search(self, keyword: str) -> list[Template.Song.Information]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item) -> Template.SongInfo:
+        def parse(item) -> Template.Song.Information:
             song_name = item['SongName']
             singer_name = item['SingerName']
             album_name = item['AlbumName']
@@ -78,7 +78,7 @@ class API(Template):
             desc = [song_name, singer_name]
             if album_name:
                     desc.append(album_name)
-            return Template.SongInfo(
+            return Template.Song.Information(
                 desc=" -> ".join(desc),
                 img_url=item["Image"],
                 id=(encode_album_audio_id,),
@@ -120,7 +120,7 @@ class API(Template):
             raise RuntimeError(f"search songs by keyword failed: {res['error_msg']}")
         return [parse(item) for item in res["data"]["lists"]]
 
-    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
@@ -147,4 +147,7 @@ class API(Template):
         res = json.loads(res[0])
         if res["err_code"] != 0:
             raise RuntimeError("fetch song failed")
-        return Template.Song(url=res["data"]["play_url"])
+        return Template.Song(
+            info=info,
+            url=res["data"]["play_url"]
+        )

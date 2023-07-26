@@ -38,15 +38,15 @@ class API(Template):
         s = '&'.join(f'{key}={params[key]}'for key in sorted(params)) + secret
         return md5(s.encode()).hexdigest()
 
-    async def search(self, keyword: str) -> list[Template.SongInfo]:
+    async def search(self, keyword: str) -> list[Template.Song.Information]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(tree) -> Template.SongInfo:
-            return Template.SongInfo(
+        def parse(tree) -> Template.Song.Information:
+            return Template.Song.Information(
                 desc=" -> ".join(tree.xpath(".//a/text()")),
                 id=(tree.xpath(".//a/@href")[0].split("/")[-1],),
                 master=self,
@@ -62,7 +62,7 @@ class API(Template):
         items = tree.xpath('//li[@class="pr t clearfix"]')
         return [parse(item) for item in items]
 
-    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
@@ -83,8 +83,15 @@ class API(Template):
             raise RuntimeError(f"fetch song failed: {res['errmsg']}")
         info.img_url = res["data"]["pic"]
         if res["data"]["isVip"]:
-            return Template.Song(status=Template.Song.Status.NeedVIP)
-        return Template.Song(url=res["data"]["path"], format=res["data"]["format"])
+            return Template.Song(
+                info=info,
+                status=Template.Song.Status.NeedVIP
+            )
+        return Template.Song(
+            info=info,
+            url=res["data"]["path"],
+            format=res["data"]["format"]
+        )
 
     async def _login_by_pwd(self, login_id: str, password: str, _) -> None:
         """ log in by id and password.

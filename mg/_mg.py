@@ -150,14 +150,14 @@ class API(Template):
         key_str = quote(key_str, safe='()')
         return sha1(key_str.encode()).hexdigest()
 
-    async def search(self, keyword: str) -> list[Template.SongInfo]:
+    async def search(self, keyword: str) -> list[Template.Song.Information]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(tree) -> Template.SongInfo:
+        def parse(tree) -> Template.Song.Information:
             info = tree.xpath(
                 './div[@class="song-actions single-column"]//@data-share',
             )[0]
@@ -167,7 +167,7 @@ class API(Template):
                 desc.append(info_dict['album'])
             img_url = "https:" + info_dict["imgUrl"]
             source_id = info_dict['linkUrl'].split('/')[-1]
-            return Template.SongInfo(
+            return Template.Song.Information(
                 desc=" -> ".join(desc),
                 img_url=img_url,
                 id=(source_id,),
@@ -195,7 +195,7 @@ class API(Template):
         items = tree.xpath('//div[@class="songlist-body"]/div')
         return [parse(tree) for tree in items]
 
-    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
@@ -235,9 +235,15 @@ class API(Template):
                 raise RuntimeError(f"fetch song failed: {res['msg']}")
         song_url = res['data']['playUrl']
         if song_url:
-            return Template.Song(url="https:" + song_url)
+            return Template.Song(
+                info=info,
+                url="https:" + song_url
+            )
         else:
-            return Template.Song(status=Template.Song.Status.NeedVIP)
+            return Template.Song(
+                info=info,
+                status=Template.Song.Status.NeedVIP
+            )
 
     async def _fetch_captcha(self) -> bytes:
         """ fetch captcha.
