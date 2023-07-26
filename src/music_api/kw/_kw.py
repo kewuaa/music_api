@@ -163,15 +163,15 @@ class API(Template):
         )
         return sess
 
-    async def search(self, keyword: str) -> list[Template.SongInfo]:
+    async def search(self, keyword: str) -> list[Template.Song.Information]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item: dict) -> Template.SongInfo:
-            return Template.SongInfo(
+        def parse(item: dict) -> Template.Song.Information:
+            return Template.Song.Information(
                     desc=" -> ".join((item["name"], item["artist"], item["album"])),
                     img_url=item["pic"],
                     id=(item["rid"],),
@@ -198,7 +198,7 @@ class API(Template):
         items = res["data"]["list"]
         return [parse(item) for item in items]
 
-    async def fetch_song(self, info: Template.SongInfo) -> Template.Song:
+    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
@@ -222,7 +222,10 @@ class API(Template):
             if status_code == -1:
                 return Template.Song(status=Template.Song.Status.NeedVIP)
             raise RuntimeError(f"fetch song failed: {res['msg']}")
-        return Template.Song(url=res["data"]["url"])
+        return Template.Song(
+            info=info,
+            url=res["data"]["url"]
+        )
 
     async def _fetch_captcha(self) -> bytes:
         """ fetch captcha.

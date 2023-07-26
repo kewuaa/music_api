@@ -20,24 +20,25 @@ class Template(ABC):
     class Song:
         """ song."""
 
+        @dataclass(order=False, eq=False, repr=False)
+        class Information:
+            """ information of song."""
+
+            desc: str = ""
+            img_url: str = ""
+            id: tuple = tuple()
+            master: "Template" = None # pyright: ignore
+
         class Status(IntEnum):
             """ status."""
 
             Success = 0
             NeedLogin = 1
             NeedVIP = 2
+        info: Information = Information()
         url: str = ""
         format: str = ""
         status: Status = Status.Success
-
-    @dataclass(order=False, eq=False, repr=False)
-    class SongInfo:
-        """ information of song."""
-
-        desc: str = ""
-        img_url: str = ""
-        id: tuple = tuple()
-        master: "Template" = None # pyright: ignore
 
     @dataclass(order=False, eq=False, repr=False)
     class LoginHandleT:
@@ -112,7 +113,7 @@ class Template(ABC):
             await sess.close()
 
     @abstractmethod
-    async def search(self, keyword: str) -> list[SongInfo]:
+    async def search(self, keyword: str) -> list[Song.Information]:
         """ search song by keyword.
 
         :param name: keyword to search
@@ -123,7 +124,7 @@ class Template(ABC):
 
 
     @abstractmethod
-    async def fetch_song(self, info: SongInfo) -> Song:
+    async def fetch_song(self, info: Song.Information) -> Song:
         """ fetch song by SongInfo.
 
         :param info: SongInfo
