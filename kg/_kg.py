@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+from functools import partial
 from hashlib import md5
 from typing import Optional
 
@@ -63,14 +64,14 @@ class API(Template):
             raise RuntimeError("fetch kugou appid failed")
         return appid.group(1)
 
-    async def search(self, keyword: str) -> list[Template.Song.Information]:
+    async def search(self, keyword: str) -> list[Template.Song]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item) -> Template.Song.Information:
+        def parse(item) -> Template.Song:
             song_name = item['SongName']
             singer_name = item['SingerName']
             album_name = item['AlbumName']
@@ -78,11 +79,11 @@ class API(Template):
             desc = [song_name, singer_name]
             if album_name:
                     desc.append(album_name)
-            return Template.Song.Information(
+            return Template.Song(
                 desc=" -> ".join(desc),
                 img_url=item["Image"],
-                id=(encode_album_audio_id,),
-                master=self,
+                fetch=partial(self._fetch_song, encode_album_audio_id),
+                owner=self,
             )
         sess = await self._sess
         appid = await self._appid
@@ -120,11 +121,11 @@ class API(Template):
             raise RuntimeError(f"search songs by keyword failed: {res['error_msg']}")
         return [parse(item) for item in res["data"]["lists"]]
 
-    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
-        """ fetch song by SongInfo.
+    async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
+        """ fetch song.
 
-        :param info: SongInfo
-        :return: Song object
+        :param id: id of the song
+        :return: fetch status and the url of the song
         """
 
         sess = await self._sess
@@ -137,7 +138,7 @@ class API(Template):
             "appid": appid,
             "mid": kg_mid,
             "platid": "4",
-            "encode_album_audio_id": info.id[0],
+            "encode_album_audio_id": id,
             "_": get_time_stamp(13),
         }
         res = await sess.get(url, params=params)
@@ -147,7 +148,4 @@ class API(Template):
         res = json.loads(res[0])
         if res["err_code"] != 0:
             raise RuntimeError("fetch song failed")
-        return Template.Song(
-            info=info,
-            url=res["data"]["play_url"]
-        )
+        return Template.Song.Status.Success, res["data"]["play_url"]

@@ -1,9 +1,10 @@
 import asyncio
 import base64
 import json
+from functools import partial
 from hashlib import sha1
 from re import compile
-from typing import Any, Awaitable, Callable, Optional, Coroutine
+from typing import Any, Awaitable, Callable, Coroutine, Optional
 from urllib.parse import quote
 
 import aiohttp
@@ -150,14 +151,14 @@ class API(Template):
         key_str = quote(key_str, safe='()')
         return sha1(key_str.encode()).hexdigest()
 
-    async def search(self, keyword: str) -> list[Template.Song.Information]:
+    async def search(self, keyword: str) -> list[Template.Song]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(tree) -> Template.Song.Information:
+        def parse(tree) -> Template.Song:
             info = tree.xpath(
                 './div[@class="song-actions single-column"]//@data-share',
             )[0]
@@ -167,11 +168,11 @@ class API(Template):
                 desc.append(info_dict['album'])
             img_url = "https:" + info_dict["imgUrl"]
             source_id = info_dict['linkUrl'].split('/')[-1]
-            return Template.Song.Information(
+            return Template.Song(
                 desc=" -> ".join(desc),
                 img_url=img_url,
-                id=(source_id,),
-                master=self,
+                fetch=partial(self._fetch_song, source_id),
+                owner=self,
             )
         sess = await self._sess
         app_info = await self._app_info
@@ -195,11 +196,11 @@ class API(Template):
         items = tree.xpath('//div[@class="songlist-body"]/div')
         return [parse(tree) for tree in items]
 
-    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
-        """ fetch song by SongInfo.
+    async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
+        """ fetch song.
 
-        :param info: SongInfo
-        :return: Song object
+        :param id: id of the song
+        :return: fetch status and the url of the song
         """
 
         sess = await self._sess
@@ -208,7 +209,7 @@ class API(Template):
         key = \
             '4ea5c508a6566e76240543f8feb06fd457777be39549c4016436afda65d2330e'
         data = {
-            'copyrightId': info.id[0],
+            'copyrightId': id,
             'type': 2,  # """ type: 标准:1 高品:2 无损:3,至臻:4 3D:5 """
             "auditionsFlag": 11,
         }
@@ -228,22 +229,14 @@ class API(Template):
         if status_code != '000000':
             if status_code == 'N000000':
                 # print(res["msg"])
-                return Template.Song(
-                    status=Template.Song.Status.NeedLogin
-                )
+                return Template.Song.Status.NeedLogin, ""
             else:
                 raise RuntimeError(f"fetch song failed: {res['msg']}")
         song_url = res['data']['playUrl']
         if song_url:
-            return Template.Song(
-                info=info,
-                url="https:" + song_url
-            )
+            return Template.Song.Status.Success, "https:" + song_url
         else:
-            return Template.Song(
-                info=info,
-                status=Template.Song.Status.NeedVIP
-            )
+            return Template.Song.Status.NeedVIP, ""
 
     async def _fetch_captcha(self) -> bytes:
         """ fetch captcha.

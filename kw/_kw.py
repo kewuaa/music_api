@@ -3,6 +3,7 @@ import base64
 import json
 import math
 from ctypes import c_uint32
+from functools import partial
 from pathlib import Path
 from secrets import randbelow
 from time import time
@@ -163,19 +164,19 @@ class API(Template):
         )
         return sess
 
-    async def search(self, keyword: str) -> list[Template.Song.Information]:
+    async def search(self, keyword: str) -> list[Template.Song]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item: dict) -> Template.Song.Information:
-            return Template.Song.Information(
+        def parse(item: dict) -> Template.Song:
+            return Template.Song(
                     desc=" -> ".join((item["name"], item["artist"], item["album"])),
                     img_url=item["pic"],
-                    id=(item["rid"],),
-                    master=self,
+                    fetch=partial(self._fetch_song, item["rid"]),
+                    owner=self,
                 )
         sess = await self._session()
         url = "http://www.kuwo.cn/api/www/search/searchMusicBykeyWord"
@@ -198,17 +199,17 @@ class API(Template):
         items = res["data"]["list"]
         return [parse(item) for item in items]
 
-    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
-        """ fetch song by SongInfo.
+    async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
+        """ fetch song.
 
-        :param info: SongInfo
-        :return: Song object
+        :param id: id of the song
+        :return: fetch status and the url of the song
         """
 
         sess = await self._session()
         url = "http://www.kuwo.cn/api/v1/www/music/playUrl"
         params = {
-            "mid": info.id[0],
+            "mid": id,
             "type": "music",
             "httpsStatus": "1",
             "reqId": self._gen_reqid(),
@@ -220,12 +221,9 @@ class API(Template):
         status_code = res["code"]
         if status_code != 200:
             if status_code == -1:
-                return Template.Song(status=Template.Song.Status.NeedVIP)
+                return Template.Song.Status.NeedVIP, ""
             raise RuntimeError(f"fetch song failed: {res['msg']}")
-        return Template.Song(
-            info=info,
-            url=res["data"]["url"]
-        )
+        return Template.Song.Status.Success, res["data"]["url"]
 
     async def _fetch_captcha(self) -> bytes:
         """ fetch captcha.
