@@ -20,25 +20,28 @@ class Template(ABC):
     class Song:
         """ song."""
 
-        @dataclass(order=False, eq=False, repr=False)
-        class Information:
-            """ information of song."""
-
-            desc: str = ""
-            img_url: str = ""
-            id: tuple = tuple()
-            master: "Template" = None # pyright: ignore
-
         class Status(IntEnum):
             """ status."""
 
             Success = 0
             NeedLogin = 1
             NeedVIP = 2
-        info: Information = Information()
+
+        desc: str = ""
+        img_url: str = ""
         url: str = ""
-        format: str = ""
-        status: Status = Status.Success
+        fetch: Callable[[], Coroutine[Any, Any, tuple[Status, str]]] = None # pyright: ignore
+        owner: "Template" = None # pyright: ignore
+
+        def __post_init__(self) -> None:
+            async def fetch():
+                status, url = await _fetch()
+                if status is self.Status.Success:
+                    self.url = url
+                return status, url
+
+            _fetch = self.fetch
+            self.fetch = fetch
 
     @dataclass(order=False, eq=False, repr=False)
     class LoginHandleT:
@@ -113,22 +116,11 @@ class Template(ABC):
             await sess.close()
 
     @abstractmethod
-    async def search(self, keyword: str) -> list[Song.Information]:
+    async def search(self, keyword: str) -> list[Song]:
         """ search song by keyword.
 
         :param name: keyword to search
         :return: list of search result
-        """
-
-        raise NotImplementedError
-
-
-    @abstractmethod
-    async def fetch_song(self, info: Song.Information) -> Song:
-        """ fetch song by SongInfo.
-
-        :param info: SongInfo
-        :return: Song object
         """
 
         raise NotImplementedError

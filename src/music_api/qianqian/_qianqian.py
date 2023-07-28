@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 from hashlib import md5
 from typing import Optional
 
@@ -38,18 +39,19 @@ class API(Template):
         s = '&'.join(f'{key}={params[key]}'for key in sorted(params)) + secret
         return md5(s.encode()).hexdigest()
 
-    async def search(self, keyword: str) -> list[Template.Song.Information]:
+    async def search(self, keyword: str) -> list[Template.Song]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(tree) -> Template.Song.Information:
-            return Template.Song.Information(
+        def parse(tree) -> Template.Song:
+            id = tree.xpath(".//a/@href")[0].split("/")[-1]
+            return Template.Song(
                 desc=" -> ".join(tree.xpath(".//a/text()")),
-                id=(tree.xpath(".//a/@href")[0].split("/")[-1],),
-                master=self,
+                fetch=partial(self._fetch_song, id),
+                owner=self,
             )
         sess = await self._sess
         url = "https://music.91q.com/search"
@@ -62,18 +64,18 @@ class API(Template):
         items = tree.xpath('//li[@class="pr t clearfix"]')
         return [parse(item) for item in items]
 
-    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
-        """ fetch song by SongInfo.
+    async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
+        """ fetch song.
 
-        :param info: SongInfo
-        :return: Song object
+        :param id: id of the song
+        :return: fetch status and the url of the song
         """
 
         sess = await self._sess
         url = "https://music.91q.com/v1/song/tracklink"
         params = {
             "appid": appid,
-            "TSID": info.id[0],
+            "TSID": id,
             "timestamp": get_time_stamp(),
         }
         params["sign"] = self._encrypt(params)
@@ -81,17 +83,11 @@ class API(Template):
         res = await res.json(content_type=None)
         if res["errno"] != 22000:
             raise RuntimeError(f"fetch song failed: {res['errmsg']}")
-        info.img_url = res["data"]["pic"]
+        # img_url = res["data"]["pic"]
+        # format = res["data"]["format"]
         if res["data"]["isVip"]:
-            return Template.Song(
-                info=info,
-                status=Template.Song.Status.NeedVIP
-            )
-        return Template.Song(
-            info=info,
-            url=res["data"]["path"],
-            format=res["data"]["format"]
-        )
+            return Template.Song.Status.NeedVIP, ""
+        return Template.Song.Status.Success, res["data"]["path"]
 
     async def _login_by_pwd(self, login_id: str, password: str, _) -> None:
         """ log in by id and password.

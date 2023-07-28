@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+from functools import partial
 from hashlib import md5
 from io import BytesIO
 from typing import Any, Callable, Coroutine, Optional
@@ -90,23 +91,23 @@ class API(Template):
             raise RuntimeError("fetch unikey failed")
         return res["unikey"]
 
-    async def search(self, keyword: str) -> list[Template.Song.Information]:
+    async def search(self, keyword: str) -> list[Template.Song]:
         """ search song by keyword.
 
         :param keyword: keyword to search
         :return: list of search result
         """
 
-        def parse(item: dict) -> Template.Song.Information:
-            return Template.Song.Information(
+        def parse(item: dict) -> Template.Song:
+            return Template.Song(
                 desc=" -> ".join((
                     item["name"],
                     "/".join(ar["name"] for ar in item["ar"]),
                     item["al"]["name"],
                 )),
                 img_url=item["al"]["picUrl"],
-                id=(item["id"],),
-                master=self,
+                fetch=partial(self._fetch_song, item["id"]),
+                owner=self,
             )
         sess = await self._sess
         url = "https://music.163.com/weapi/cloudsearch/get/web"
@@ -130,11 +131,11 @@ class API(Template):
             raise RuntimeError("search song by keyword failed")
         return [parse(item) for item in res["result"]["songs"]]
 
-    async def fetch_song(self, info: Template.Song.Information) -> Template.Song:
-        """ fetch song by SongInfo.
+    async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
+        """ fetch song.
 
-        :param info: SongInfo
-        :return: Song object
+        :param id: id of the song
+        :return: fetch status and the url of the song
         """
 
         sess = await self._sess
@@ -143,7 +144,7 @@ class API(Template):
             "csrf_token": self._csrf_token
         }
         data = {
-            'ids': f'[{info.id[0]}]',
+            'ids': f'[{id}]',
             'level': 'standard',
             'encodeType': 'aac',
             'csrf_token': self._csrf_token,
@@ -154,16 +155,10 @@ class API(Template):
         if res["code"] != 200:
             raise RuntimeError("fetch song failed")
         song_url = res["data"][0]["url"]
+        # format = res["data"][0]["type"]
         if song_url is None:
-            return Template.Song(
-                info=info,
-                status=Template.Song.Status.NeedVIP
-            )
-        return Template.Song(
-            info=info,
-            url=song_url,
-            format=res["data"][0]["type"]
-        )
+            return Template.Song.Status.NeedVIP, ""
+        return Template.Song.Status.Success, song_url
 
     async def _update_token(self) -> None:
         """ update csrf_token after log in."""
