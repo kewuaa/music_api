@@ -4,11 +4,11 @@ from music_api import kg
 
 
 async def _test() -> None:
+    api = kg.API()
     try:
-        api = kg.API()
-        songs = await api.search("周杰伦")
-        song = await api.fetch_song(songs[0])
-        assert song.status == song.Status.Success
+        song = (await api.search("周杰伦"))[0]
+        status, url = await song.fetch()
+        assert status == song.Status.Success
     finally:
         await api.deinit()
 

@@ -16,19 +16,18 @@ async def show(img: bytes) -> None:
 
 
 async def _test() -> None:
+    api = wyy.API()
     try:
-        api = wyy.API()
-        songs = await api.search("周杰伦")
-        assert songs
-        song = await api.fetch_song(songs[0])
-        assert song.status == song.Status.Success
+        song = (await api.search("周杰伦"))[0]
+        status, url = await song.fetch()
+        assert status == song.Status.Success
     finally:
         await api.deinit()
 
 
 async def _test_login_by_qrcode() -> None:
+    api = wyy.API()
     try:
-        api = wyy.API()
         login_by_qrcode = api.login.QR
         assert login_by_qrcode is not None
         await login_by_qrcode(show)
@@ -37,16 +36,16 @@ async def _test_login_by_qrcode() -> None:
 
 
 async def _test_login_by_sms() -> None:
+    api = wyy.API()
     try:
-        api = wyy.API()
         if api.login.SMS is None:
             return
         fetch_captch, send_sms, login_by_sms = api.login.SMS
         if fetch_captch is not None:
             await show(await fetch_captch())
-        await send_sms(account["cellphone"], None)
+        await send_sms(account["cellphone"], "")
         verify_code = input("verify code is:")
-        await login_by_sms(account["cellphone"], verify_code, None)
+        await login_by_sms(account["cellphone"], verify_code, "")
     finally:
         await api.deinit()
 

@@ -8,20 +8,20 @@ with open(Path(__file__).parent / "account", "r") as f:
 
 
 async def _test() -> None:
+    api = qianqian.API()
     try:
-        api = qianqian.API()
-        songs = await api.search("张碧晨")
-        song = await api.fetch_song(songs[0])
-        assert song.status == song.Status.Success
+        song = (await api.search("张碧晨"))[0]
+        status, url = await song.fetch()
+        assert status == song.Status.Success
     finally:
         await api.deinit()
 
 
 async def _test_login_by_pwd() -> None:
+    api = qianqian.API()
     try:
-        api = qianqian.API()
         _, login_by_pwd = api.login.PWD
-        await login_by_pwd(account["id"], account["password"], None)
+        await login_by_pwd(account["id"], account["password"], "")
     finally:
         await api.deinit()
 

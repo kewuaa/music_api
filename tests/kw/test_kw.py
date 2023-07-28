@@ -16,18 +16,18 @@ async def show(img: bytes) -> None:
 
 
 async def _test() -> None:
+    api = kw.API()
     try:
-        api = kw.API()
-        songs = await api.search("周杰伦")
-        song = await api.fetch_song(songs[0])
-        assert song.status == song.Status.NeedVIP
+        song = (await api.search("周杰伦"))[0]
+        status, url = await song.fetch()
+        assert status == song.Status.NeedVIP
     finally:
         await api.deinit()
 
 
 async def _test_login_by_pwd() -> None:
+    api = kw.API()
     try:
-        api = kw.API()
         fetch_captcha, login_by_pwd = api.login.PWD
         await show(await fetch_captcha())
         await login_by_pwd(account["id"], account["password"], input("captcha is:"))
@@ -36,8 +36,8 @@ async def _test_login_by_pwd() -> None:
 
 
 async def _test_login_by_sms() -> None:
+    api = kw.API()
     try:
-        api = kw.API()
         fetch_captcha, send_sms, login_by_sms = api.login.SMS
         await show(await fetch_captcha())
         captcha = input("captcha is:")

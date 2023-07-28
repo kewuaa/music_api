@@ -17,8 +17,8 @@ async def show(img: bytes) -> None:
 
 
 async def _test_search() -> None:
+    api = mg.API()
     try:
-        api = mg.API()
         songs = await api.search("张碧晨")
         assert songs
     finally:
@@ -26,22 +26,22 @@ async def _test_search() -> None:
 
 
 async def _test_login_by_qr() -> None:
+    api = mg.API()
     try:
-        api = mg.API()
         login_by_qr = api.login.QR
         if login_by_qr is not None:
             await login_by_qr(show)
-        songs = await api.search("张碧晨")
-        song = await api.fetch_song(songs[0])
-        assert song.status == song.Status.Success
+        song = (await api.search("张碧晨"))[0]
+        status, url = await song.fetch()
+        assert status is song.Status.Success
     finally:
         await api.deinit()
 
 
 async def _test_login_by_pwd() -> None:
+    api = mg.API()
     try:
-        api = mg.API()
-        if api.login.QR is None:
+        if api.login.PWD is None:
             return
         fetch_captch, login_by_pwd = api.login.PWD
         if fetch_captch is not None:
@@ -52,16 +52,16 @@ async def _test_login_by_pwd() -> None:
         except RuntimeError as e:
             print(e)
             return
-        songs = await api.search("张碧晨")
-        song = await api.fetch_song(songs[0].id)
-        assert song.status == song.Status.Success
+        song = (await api.search("张碧晨"))[0]
+        status, url = await song.fetch()
+        assert status is song.Status.Success
     finally:
         await api.deinit()
 
 
 async def _test_login_by_sms() -> None:
+    api = mg.API()
     try:
-        api = mg.API()
         if api.login.SMS is None:
             return
         fetch_captch, send_sms, login_by_sms = api.login.SMS
@@ -71,9 +71,9 @@ async def _test_login_by_sms() -> None:
         await send_sms(account["id"], captcha)
         verify_code = input("verify_code is:")
         await login_by_sms(account["id"], verify_code, captcha)
-        songs = await api.search("张碧晨")
-        song = await api.fetch_song(songs[0].id)
-        assert song.status == song.Status.Success
+        song = (await api.search("张碧晨"))[0]
+        status, url = await song.fetch()
+        assert status == song.Status.Success
     finally:
         await api.deinit()
 
