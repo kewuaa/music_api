@@ -129,6 +129,7 @@ class API(Template):
         sess = aiohttp.ClientSession(
             loop=self._loop,
             headers={
+                "Content-Type": "application/json;charset=utf-8",
                 "user-agent": await self.load_agents(),
                 "Referer": "https://www.kuwo.cn/",
                 "Host": "www.kuwo.cn",
