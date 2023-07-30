@@ -1,4 +1,7 @@
 .pytest_cache/
 __pycache__/
+build/
+dist/
 account
+*.egg-info/
 *.jpg

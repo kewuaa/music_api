@@ -1,3 +1,25 @@
+[project]
+name = "music_api"
+version = "0.1.0"
+description = "music apis"
+authors = [
+    {name = "kewuaa"}
+]
+urls = {GitHub = "https://github.com/kewuaa/music_api"}
+dependencies = [
+    "aiohttp",
+    "aiofiles",
+    "rsa",
+    "pycryptodome",
+    "lxml",
+    "qrcode",
+]
+readme = "README.md"
+
+[tool.setuptools]
+packages = { find = { where = ["./src"] } }
+package-dir = { "" = "./src" }
+
 [tool.pyright]
 include = ["src"]
 exclude = [
