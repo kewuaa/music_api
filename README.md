@@ -20,6 +20,12 @@ async def main() -> None:
     songs = await api.search("enemy")
     assert songs
     song = songs[0]
+    assert type(song) is Template.Song
+    # Song object has fields:
+    #     desc: simple description of the song
+    #     url: url of song
+    #     fetch: function to fetch song url
+    #     owner: owner of the song, instance of Template
     assert song.url == ""
     status, url = await song.fetch()
     if status is Template.Song.Status.Success:
