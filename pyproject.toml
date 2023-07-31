@@ -19,6 +19,7 @@ readme = "README.md"
 [tool.setuptools]
 packages = { find = { where = ["./src"] } }
 package-dir = { "" = "./src" }
+package-data = {music_api = ["*.txt"]}
 
 [tool.pyright]
 include = ["src"]
