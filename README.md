@@ -9,6 +9,8 @@ it includes
 
 # examples
 
+## fetch song
+
 ```python
 import asyncio
 
@@ -35,6 +37,54 @@ async def main() -> None:
         print("need vip")
     elif status is Template.Song.Status.NeedLogin:
         print("need log in")
+
+
+if __name__ == "__main__":
+    asyncio.get_event_loop().run_until_complete(main())
+```
+
+## log in
+
+```python
+import asyncio
+from io import BytesIO
+
+from music_api import Template, migu
+from PIL import Image
+
+
+async def show_img(img: bytes) -> None:
+    f = BytesIO(img)
+    img = Image.open(f)
+    img.show()
+
+async def main() -> None:
+    api = migu.API()
+
+    assert api.login.QR is not None
+    login_by_qr = api.login.QR
+    await login_by_qr(show_img)
+
+    assert api.login.SMS is not None
+    cellphone = input("cellphone is:")
+    fetch_captcha, send_sms, login_by_sms = api.login.SMS
+    captcha = ""
+    if fetch_captcha is not None:
+        await fetch_captcha()
+        captcha = input("captcha is:")
+    await send_sms(cellphone, captcha)
+    verify_code = input("verify code is:")
+    await login_by_sms(cellphone, verify_code, captcha)
+
+    assert api.login.PWD is not None
+    cellphone = input("cellphone is:")
+    password = input("password is:")
+    fetch_captcha, login_by_pwd = api.login.PWD
+    captcha = ""
+    if fetch_captcha is not None:
+        await fetch_captcha()
+        captcha = input("captcha is:")
+    await login_by_pwd(cellphone, password, captcha)
 
 
 if __name__ == "__main__":
