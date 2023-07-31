@@ -14,11 +14,11 @@ it includes
 ```python
 import asyncio
 
-from music_api import Template, migu
+from music_api import Template, mg
 
 
 async def main() -> None:
-    api = migu.API()
+    api = mg.API()
     songs = await api.search("enemy")
     assert songs
     song = songs[0]
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 import asyncio
 from io import BytesIO
 
-from music_api import Template, migu
+from music_api import Template, mg
 from PIL import Image
 
 
@@ -59,7 +59,7 @@ async def show_img(img: bytes) -> None:
     img.show()
 
 async def main() -> None:
-    api = migu.API()
+    api = mg.API()
 
     assert api.login.QR is not None
     login_by_qr = api.login.QR
