@@ -7,6 +7,10 @@ it includes
 * [migu](https://music.migu.cn/v3)
 * [qianqian](https://music.91q.com/)
 
+# install
+
+`pip install pymusicapi`
+
 # examples
 
 ## fetch song
