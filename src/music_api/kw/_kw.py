@@ -79,12 +79,13 @@ def encrypt(value: str, cookie_key: str) -> str:
     #     "7210995731171181169599100985350521025250102489910149579849545798564855"
     #     "504950519752555055"
     # )
-    o = 60950
-    l = 20
-    c = 2 ** 31 - 1
+    o = 91455
+    l = 22
+    # c = 2 ** 31 - 1
+    c = 2147483647
     # d = int(round(1e9 * random()) % 1e8)
-    d = 2434015
-    key = 798334170
+    d = 30061716
+    key = 1103782257
     f = ""
     for s in value:
         h = ord(s) ^ math.floor(key / c * 255)
@@ -94,7 +95,7 @@ def encrypt(value: str, cookie_key: str) -> str:
             f += str(hex(h)[2:])
         key = (o * int(key) + l) % c
     # d = f"{hex(d)[2:]:0>8}"
-    d = "002523df"
+    d = "01cab494"
     return f + d
 
 
@@ -147,7 +148,7 @@ class API(Template):
 
         sess = await self._sess
         cookies = sess.cookie_jar.filter_cookies("https://www.kuwo.cn/") # pyright: ignore
-        token = cookies.get("Hm_Iuvt_cdb524f42f0ce19b169b8072123a4727")
+        token = cookies.get("Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324")
         assert token is not None
         token = token.value
         # proc = await asyncio.create_subprocess_shell(
@@ -161,7 +162,7 @@ class API(Template):
         # sess.headers["Secret"] = stdout.decode().strip()
         sess.headers["Secret"] = encrypt(
             token,
-            "Hm_Iuvt_cdb524f42f0ce19b169b8072123a4727"
+            "Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324"
         )
         return sess
 
@@ -174,30 +175,31 @@ class API(Template):
 
         def parse(item: dict) -> Template.Song:
             return Template.Song(
-                    desc=" -> ".join((item["name"], item["artist"], item["album"])),
-                    img_url=item["pic"],
-                    fetch=partial(self._fetch_song, item["rid"]),
+                    desc=" -> ".join((item["NAME"], item["ARTIST"], item["ALBUM"])),
+                    img_url="https://img2.kuwo.cn/star/albumcover/" + item["web_albumpic_short"],
+                    fetch=partial(self._fetch_song, item["DC_TARGETID"]),
                     owner=self,
                 )
         sess = await self._session()
-        url = "http://www.kuwo.cn/api/www/search/searchMusicBykeyWord"
+        url = "https://www.kuwo.cn/search/searchMusicBykeyWord"
         params = {
-            "key": keyword,
-            "pn": "1",
-            "rn": "15",
-            "httpsStatus": "1",
-            "reqId": self._gen_reqid(),
-            "plat": "web_www",
-            "from": "",
+            "vipver": "1",
+            "client": "kt",
+            "ft": "music",
+            "cluster": "0",
+            "strategy": "2012",
+            "encoding": "utf8",
+            "rformat": "json",
+            "mobi": "1",
+            "issubtitle": "1",
+            "show_copyright_off": "1",
+            "pn": "0",
+            "rn": "20",
+            "all": keyword,
         }
         res = await sess.get(url, params=params)
         res = await res.json(content_type=None)
-        status_code = res.get("code")
-        if status_code is None:
-            raise RuntimeError(f"search songs by keyword failed: {res['message']}")
-        elif status_code != 200:
-            raise RuntimeError(f"search songs by keyword failed: {res['msg']}")
-        items = res["data"]["list"]
+        items = res["abslist"]
         return [parse(item) for item in items]
 
     async def _fetch_song(self, id: str) -> tuple[Template.Song.Status, str]:
@@ -208,7 +210,7 @@ class API(Template):
         """
 
         sess = await self._session()
-        url = "http://www.kuwo.cn/api/v1/www/music/playUrl"
+        url = "https://www.kuwo.cn/api/v1/www/music/playUrl"
         params = {
             "mid": id,
             "type": "music",
@@ -219,11 +221,10 @@ class API(Template):
         }
         res = await sess.get(url, params=params)
         res = await res.json(content_type=None)
-        status_code = res["code"]
-        if status_code != 200:
-            if status_code == -1:
+        if not res["success"]:
+            if res.get("code") == -1:
                 return Template.Song.Status.NeedVIP, ""
-            raise RuntimeError(f"fetch song failed: {res['msg']}")
+            raise RuntimeError(f"fetch song failed: {res['message']}")
         return Template.Song.Status.Success, res["data"]["url"]
 
     async def _fetch_captcha(self) -> bytes:
