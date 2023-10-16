@@ -132,12 +132,17 @@ class API(Template):
             headers={
                 "Content-Type": "application/json;charset=utf-8",
                 "user-agent": await self.load_agents(),
-                "Referer": "https://www.kuwo.cn/",
+                # "Referer": "https://www.kuwo.cn/",
                 "Host": "www.kuwo.cn",
             },
             # cookies={"Hm_token": "chB5p2Fz5DyxewBQ7Qm8PH7j4Y44JnrS"}
         )
-        await sess.get("http://www.kuwo.cn/")
+        try:
+            await sess.get("http://www.kuwo.cn/")
+        except ServerDisconnectedError:
+            await sess.close()
+            await asyncio.sleep(0)
+            return await self._init_sess()
         return sess
 
     async def _session(self) -> aiohttp.ClientSession:
