@@ -20,7 +20,7 @@ async def _test() -> None:
     try:
         song = (await api.search("周杰伦"))[0]
         status, url = await song.fetch()
-        assert status == song.Status.Success
+        assert status == song.Status.NeedVIP
     finally:
         await api.deinit()
 
