@@ -10,6 +10,7 @@ from time import time
 from typing import Optional
 
 import aiohttp
+from aiohttp.client_exceptions import ServerDisconnectedError
 
 from .._template import Template
 
